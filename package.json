@@ -1,0 +1,67 @@
+{
+  "name": "fresh-client",
+  "productName": "Fresh Client",
+  "version": "3.0.0",
+  "description": "Launcher Minecraft: Java Edition z logowaniem Microsoft, profilami, modami z Modrinth, kosmetykami 3D i własnym modem.",
+  "main": "src/main/main.js",
+  "author": "Fresh Client contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test",
+    "icon": "node scripts/gen-icon.js",
+    "export": "node scripts/export-cosmetics.js",
+    "predist": "node scripts/gen-icon.js",
+    "dist": "electron-builder --win nsis portable",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.1.0",
+    "adm-zip": "^0.4.16",
+    "extract-zip": "^2.0.1",
+    "minecraft-launcher-core": "^3.18.2",
+    "skinview3d": "^3.1.0",
+    "tar": "^6.2.1"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "pl.fresh.client",
+    "productName": "Fresh Client",
+    "copyright": "Fresh Client contributors",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "resources/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/minecraft-launcher-core/**"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Fresh Client"
+    },
+    "portable": {
+      "artifactName": "Fresh-Client-${version}-portable.exe"
+    }
+  }
+}

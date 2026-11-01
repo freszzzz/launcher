@@ -1,0 +1,31 @@
+/* Event Halloween */
+:root[data-event="halloween"] { --grad: linear-gradient(120deg, #fdba74 0%, #f97316 45%, #c084fc 100%); }
+:root[data-event="halloween"] .greet h1 .grad-text { filter: drop-shadow(0 4px 18px rgba(249, 115, 22, .45)); }
+.crate-hero--event { border-color: rgba(249, 115, 22, .45); background: radial-gradient(70% 120% at 15% 50%, rgba(249, 115, 22, .26), transparent 70%), radial-gradient(60% 100% at 100% 0%, rgba(147, 51, 234, .25), transparent 70%), rgba(24, 12, 30, .72); }
+.crate-hero--event .crate-glow { background: conic-gradient(from 0deg, transparent, rgba(249, 115, 22, .45), transparent 25%, rgba(168, 85, 247, .4), transparent 55%, rgba(249, 115, 22, .4), transparent 80%); }
+.crate-hero--event .crate-info h3 { background: linear-gradient(120deg, #fed7aa, #f97316 55%, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ev-tag { color: #fdba74; }
+.crate-open--ev { --c: #ea580c; --c-hi: #f97316; color: #fff; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2), 0 10px 26px rgba(234, 88, 12, .45); }
+.crate-open--ev .ico { color: #fff; }
+.ev-items { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.ev-item { position: relative; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--rar) 16%, rgba(0, 0, 0, .35)); box-shadow: inset 0 -2px 0 var(--rar); overflow: hidden; }
+.ev-item canvas { width: 36px; height: 36px; filter: grayscale(.7) brightness(.6); }
+.ev-item .cape-thumb { width: 20px; height: 32px; }
+.ev-item.is-owned canvas { filter: none; }
+.ev-item .ico { position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 99px; background: var(--green); color: #fff; }
+.ev-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ev-progress { font-size: 13px; color: var(--muted); }
+.ev-progress b { color: #fdba74; }
+.bat { position: absolute; z-index: 2; width: 18px; height: 8px; background: #0b0612; clip-path: polygon(0 20%, 25% 60%, 40% 30%, 50% 55%, 60% 30%, 75% 60%, 100% 20%, 80% 100%, 50% 75%, 20% 100%); animation: bat-fly 3.2s ease-in-out infinite; }
+.bat--1 { top: 18px; left: 22px; }
+.bat--2 { top: 40px; right: 18px; transform: scale(.8); animation-delay: -1.4s; }
+@keyframes bat-fly { 0%, 100% { translate: 0 0; } 25% { translate: 8px -6px; } 50% { translate: 14px 2px; } 75% { translate: 4px 6px; } }
+.rcard-limit { position: absolute; top: 6px; left: 6px; z-index: 1; padding: 1px 6px; border-radius: 6px; background: #ea580c; color: #fff; font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.chip--event { border-color: rgba(249, 115, 22, .5); color: #fdba74; }
+.chip--event.is-active { background: #f97316; border-color: #f97316; color: #1c0a00; }
+.roll--halloween .roll { border-color: rgba(249, 115, 22, .45); background: radial-gradient(80% 60% at 50% 0%, rgba(147, 51, 234, .22), transparent 70%), rgba(20, 10, 24, .97); }
+.roll--halloween .roll-marker { background: #f97316; box-shadow: 0 0 14px #f97316; }
+.roll--halloween .roll-marker::before { border-top-color: #f97316; }
+.roll--halloween .roll-marker::after { border-bottom-color: #f97316; }
+.roll--halloween .roll-fade--l { background: linear-gradient(90deg, rgba(20, 10, 24, 1), transparent); }
+.roll--halloween .roll-fade--r { background: linear-gradient(-90deg, rgba(20, 10, 24, 1), transparent); }

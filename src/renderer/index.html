@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cdn.modrinth.com; font-src 'self' data:; connect-src 'self' data: blob:">
+  <title>Fresh Client</title>
+  <link rel="stylesheet" href="../../node_modules/@fontsource-variable/inter/index.css">
+  <link rel="stylesheet" href="../../node_modules/@fontsource/press-start-2p/index.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/profiles.css">
+  <link rel="stylesheet" href="css/mods.css">
+  <link rel="stylesheet" href="css/wardrobe.css">
+  <link rel="stylesheet" href="css/discord.css">
+  <link rel="stylesheet" href="css/rewards.css">
+  <link rel="stylesheet" href="css/stats.css">
+  <link rel="stylesheet" href="css/event.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <!-- Żywy świat: animowana scena pixel-art pod całym interfejsem -->
+  <canvas id="world" aria-hidden="true"></canvas>
+  <div class="world-shade" aria-hidden="true"></div>
+
+  <!-- ===== PASEK TYTUŁU ===== -->
+  <header class="titlebar">
+    <div class="titlebar-brand">
+      <canvas class="brand-logo" data-logo="big" data-scale="2"></canvas>
+      <span class="brand-text">FRESH<small>CLIENT</small></span>
+      <span class="brand-ver">3.0</span>
+    </div>
+    <div class="titlebar-status" id="tb-status"><span class="dot dot--green"></span><span>Gotowy</span></div>
+    <div class="titlebar-controls">
+      <button class="tb-btn tb-phase" id="tb-theme" title="Pora dnia sceny"><i class="ico" data-ico="moon" data-size="16"></i><span id="tb-phase-label">Auto</span></button>
+      <button class="tb-btn" id="tb-min" title="Minimalizuj"><i class="ico" data-ico="minus" data-size="16"></i></button>
+      <button class="tb-btn tb-close" id="tb-close" title="Zamknij"><i class="ico" data-ico="x" data-size="16"></i></button>
+    </div>
+  </header>
+
+  <div class="app">
+    <!-- ===== PASEK IKON ===== -->
+    <nav class="rail">
+      <div class="nav" id="nav">
+        <span class="nav-indicator" id="nav-indicator"></span>
+        <button class="nav-btn is-active" data-target="home" data-tip="Główna" aria-label="Główna"><i class="ico" data-ico="home"></i></button>
+        <button class="nav-btn" data-target="profiles" data-tip="Profile" aria-label="Profile"><i class="ico" data-ico="grid"></i></button>
+        <button class="nav-btn" data-target="mods" data-tip="Mody · Modrinth" aria-label="Mody"><i class="ico" data-ico="package"></i><span class="nav-new"></span></button>
+        <button class="nav-btn" data-target="cosmetics" data-tip="Kosmetyki" aria-label="Kosmetyki"><i class="ico" data-ico="shirt"></i></button>
+        <button class="nav-btn" data-target="rewards" data-tip="Codzienna skrzynka" aria-label="Nagrody"><i class="ico" data-ico="gift"></i><span class="nav-new nav-new--gift" id="rewards-badge" hidden></span></button>
+        <button class="nav-btn" data-target="client" data-tip="Moduły Fresh (R-Shift)" aria-label="Moduły Fresh"><i class="ico" data-ico="sliders"></i></button>
+        <button class="nav-btn" data-target="stats" data-tip="Statystyki" aria-label="Statystyki"><i class="ico" data-ico="chart"></i></button>
+        <button class="nav-btn" data-target="friends" data-tip="Znajomi" aria-label="Znajomi"><i class="ico" data-ico="users"></i><span class="nav-badge" id="friends-badge" hidden></span></button>
+      </div>
+      <div class="rail-bottom">
+        <button class="nav-btn" data-target="settings" data-tip="Ustawienia" aria-label="Ustawienia"><i class="ico" data-ico="settings"></i></button>
+        <button class="rail-play tex" id="rail-play" data-tip="Graj" aria-label="Graj"><i class="ico" data-ico="play" data-size="20"></i></button>
+      </div>
+    </nav>
+
+    <main class="stage" id="stage">
+      <div class="wipe" id="wipe" aria-hidden="true"></div>
+
+      <!-- ================= GŁÓWNA ================= -->
+      <section class="panel is-active" data-panel="home">
+        <div class="home">
+          <!-- lewa strona: powitanie + postać stojąca na scenie -->
+          <div class="home-left">
+            <div class="greet stagger">
+              <span class="phase-chip" id="phase-chip"><i class="ico" data-ico="moon" data-size="14"></i><span id="phase-label">Noc</span><span class="sep">·</span><span id="clock">--:--</span></span>
+              <h1><span id="greet-word">Dobry wieczór</span>,<br><span class="grad-text" id="welcome-nick">Graczu</span></h1>
+              <p><span id="unlock-count">31</span> kosmetyków 3D · mody z Modrinth · menu pod <kbd>R-Shift</kbd></p>
+            </div>
+
+            <div class="stage3d stagger" id="hero">
+              <div class="aura-ring" aria-hidden="true"></div>
+              <canvas class="hero-skin" id="hero-skin"></canvas>
+              <div class="name-row">
+                <button class="name-pill" id="hero-name" title="Kosmetyki">
+                  <span class="name-dot"></span>
+                  <strong id="hero-nick">Gość</strong>
+                  <small>Zmień wygląd</small>
+                </button>
+                <button class="round-btn" id="hero-edit" title="Edytuj wygląd"><i class="ico" data-ico="pencil" data-size="16"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- prawa strona: konto, skróty, wiadomości, profile -->
+          <aside class="home-right">
+            <button class="account-chip glass stagger" id="account-chip">
+              <canvas id="head-canvas" width="8" height="8"></canvas>
+              <span class="account-text"><small>Konto Microsoft</small><span id="account-name">Zaloguj się</span></span>
+              <i class="ico" data-ico="chevron" data-size="16"></i>
+            </button>
+
+            <div class="quick stagger">
+              <button class="quick-tile quick-tile--violet tex" id="brand-cos"><i class="ico" data-ico="shirt" data-size="22"></i><span>Kosmetyki</span></button>
+              <button class="quick-tile quick-tile--dark tex" id="brand-mods"><i class="ico" data-ico="package" data-size="22"></i><span>Mody · Modrinth</span></button>
+            </div>
+
+            <div class="news glass stagger">
+              <div class="news-list" id="news-list"></div>
+              <div class="news-dots" id="news-dots"></div>
+            </div>
+
+            <div class="recent glass stagger">
+              <div class="recent-head">
+                <h3 class="section-title"><i class="ico" data-ico="clock" data-size="16"></i> Ostatnio grane</h3>
+                <button class="link-btn" id="btn-manage-profiles">Wszystkie →</button>
+              </div>
+              <div class="profile-list profile-list--compact" id="recent-profiles"></div>
+              <button class="link-btn link-btn--add" id="btn-new-profile"><i class="ico" data-ico="plus" data-size="14"></i> Nowy profil</button>
+            </div>
+
+            <div class="friends-card glass stagger" id="friends-card">
+              <div class="recent-head">
+                <h3 class="section-title"><i class="ico" data-ico="users" data-size="16"></i> Znajomi <span class="count-pill" id="friends-online-count">0</span></h3>
+                <button class="link-btn" id="btn-friends-all">Wszyscy →</button>
+              </div>
+              <div class="mini-friends" id="mini-friends"></div>
+              <div class="net-line"><span class="dot dot--green" id="net-dot"></span><small id="server-status">Sprawdzanie…</small></div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- dock: wybór profilu + postęp + GRAJ -->
+        <div class="dock glass">
+          <button class="profile-picker" id="profile-picker">
+            <span class="picker-icon" id="picker-icon"></span>
+            <span class="picker-text">
+              <small>Profil</small>
+              <strong id="play-profile">—</strong>
+              <span id="play-version">—</span>
+            </span>
+            <i class="ico" data-ico="chevron" data-size="16"></i>
+          </button>
+
+          <div class="dock-progress">
+            <div class="xpbar" id="xpbar">
+              <div class="xpbar-label">
+                <span id="xp-stage">Gotowy do gry</span>
+                <span id="xp-detail"></span>
+              </div>
+              <div class="xpbar-track" id="xp-track"></div>
+            </div>
+          </div>
+
+          <div class="dock-actions">
+            <button class="round-btn" id="btn-logs" title="Konsola"><i class="ico" data-ico="terminal" data-size="18"></i></button>
+            <button class="round-btn" id="btn-kill" title="Zamknij grę"><i class="ico" data-ico="stop" data-size="16"></i></button>
+            <button class="play-btn tex" id="btn-play">
+              <span class="play-glow" aria-hidden="true"></span>
+              <span class="play-tri"></span><span id="play-label">Graj</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="console glass" id="console" hidden>
+          <div class="console-head"><span>Konsola gry</span><button class="link-btn" id="btn-console-close">Zwiń</button></div>
+          <pre id="console-out"></pre>
+        </div>
+      </section>
+
+      <!-- ================= PROFILE ================= -->
+      <section class="panel" data-panel="profiles">
+        <div class="panel-head panel-head--row stagger">
+          <div>
+            <h2>Profile <span class="head-count" id="profiles-count">0</span></h2>
+            <p class="muted">Każdy profil to osobny folder z modami, światami i ustawieniami. Biblioteki i zasoby gry są wspólne.</p>
+          </div>
+          <button class="px-btn" id="btn-profiles-new"><i class="ico" data-ico="plus" data-size="18"></i> Nowy profil</button>
+        </div>
+        <div class="profile-cards stagger" id="profile-cards"></div>
+      </section>
+
+      <!-- ================= KOSMETYKI ================= -->
+      <section class="panel" data-panel="cosmetics">
+        <div class="cos-layout">
+          <nav class="cos-nav px-box stagger" id="cos-nav"></nav>
+
+          <div class="cos-main stagger">
+            <div class="cos-head">
+              <div>
+                <h2 id="cos-title">Peleryny Fresh</h2>
+                <p class="muted" id="cos-desc"></p>
+              </div>
+            </div>
+            <div class="chip-row" id="cos-rarity"></div>
+            <div class="cosmetic-grid" id="cosmetic-grid"></div>
+          </div>
+
+          <aside class="cos-viewer px-box stagger">
+            <div class="viewer-stage">
+              <canvas id="skin-canvas"></canvas>
+              <p class="viewer-fallback" id="viewer-fallback" hidden>Podgląd 3D niedostępny (brak WebGL).</p>
+              <div class="viewer-controls">
+                <button class="vc-btn is-on" id="vc-rotate" title="Automatyczny obrót"><i class="ico" data-ico="refresh" data-size="15"></i></button>
+                <button class="vc-btn vc-btn--wide" id="vc-anim" title="Animacja"><i class="ico" data-ico="play" data-size="13"></i><span>Chód</span></button>
+                <button class="vc-btn vc-btn--wide" id="vc-elytra" title="Elytra zamiast peleryny"><i class="ico" data-ico="cape" data-size="15"></i><span>Elytra</span></button>
+              </div>
+            </div>
+            <div class="loadout-head"><span class="eyebrow">Na sobie</span><span class="count-pill" id="loadout-count">0/6</span></div>
+            <div class="loadout" id="loadout"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= NAGRODY (codzienna skrzynka) ================= -->
+      <section class="panel" data-panel="rewards">
+        <div class="panel-head stagger">
+          <h2>Nagrody</h2>
+          <p class="muted">Codziennie jedna darmowa skrzynka z kosmetykiem. Duplikaty zamieniają się w odłamki, za które kupisz wybrany kosmetyk.</p>
+        </div>
+        <div class="rw-layout">
+          <div class="rw-main">
+            <div class="crate-hero crate-hero--event px-box stagger" id="event-hero" hidden></div>
+            <div class="crate-hero px-box stagger" id="crate-hero"></div>
+            <div class="rw-shop-head stagger">
+              <h3 class="section-title"><i class="ico" data-ico="gem" data-size="17"></i> Sklep odłamków</h3>
+              <div class="chip-row" id="rw-shop-filter"></div>
+            </div>
+            <div class="rw-shop stagger" id="rw-shop"></div>
+          </div>
+          <aside class="rw-side stagger">
+            <div class="rw-stats px-box">
+              <div class="rw-stat"><span class="rw-ico rw-ico--gem"><i class="ico" data-ico="gem" data-size="18"></i></span><span><small>Odłamki</small><strong id="rw-shards">0</strong></span></div>
+              <div class="rw-stat"><span class="rw-ico"><i class="ico" data-ico="shirt" data-size="18"></i></span><span><small>Kolekcja</small><strong id="rw-collection">0/0</strong></span></div>
+              <div class="st-track st-track--big"><i id="rw-collection-bar"></i></div>
+              <div class="rw-stat"><span class="rw-ico"><i class="ico" data-ico="gift" data-size="18"></i></span><span><small>Otwarte skrzynki</small><strong id="rw-opened">0</strong></span></div>
+            </div>
+            <div class="px-box rw-box">
+              <h3 class="section-title"><i class="ico" data-ico="info" data-size="16"></i> Szanse</h3>
+              <div class="rw-odds" id="rw-odds"></div>
+              <p class="muted rw-note">Co 7. dzień serii – gwarantowany kosmetyk epicki lub legendarny.</p>
+            </div>
+            <div class="px-box rw-box">
+              <h3 class="section-title"><i class="ico" data-ico="clock" data-size="16"></i> Ostatnie dropy</h3>
+              <div class="rw-history" id="rw-history"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= STATYSTYKI ================= -->
+      <section class="panel" data-panel="stats">
+        <div class="panel-head stagger">
+          <h2>Statystyki</h2>
+          <p class="muted">Liczone automatycznie, gdy grasz przez Fresh Client – czas na profilach, serwerach i w kolejnych dniach.</p>
+        </div>
+        <div class="st-tiles stagger" id="st-tiles"></div>
+        <div class="st-grid">
+          <div class="px-box st-card st-card--wide stagger">
+            <div class="st-card-head"><h3 class="section-title"><i class="ico" data-ico="chart" data-size="16"></i> Czas gry – ostatnie 14 dni</h3><small class="muted" id="st-chart-sub"></small></div>
+            <div class="st-chart" id="st-chart"></div>
+          </div>
+          <div class="px-box st-card stagger">
+            <div class="st-card-head"><h3 class="section-title"><i class="ico" data-ico="grid" data-size="16"></i> Profile</h3></div>
+            <div id="st-profiles"></div>
+          </div>
+          <div class="px-box st-card stagger">
+            <div class="st-card-head"><h3 class="section-title"><i class="ico" data-ico="server" data-size="16"></i> Gdzie grasz</h3></div>
+            <div id="st-servers"></div>
+          </div>
+          <div class="px-box st-card st-card--wide stagger" id="st-collection"></div>
+        </div>
+      </section>
+
+      <!-- ================= ZNAJOMI ================= -->
+      <section class="panel" data-panel="friends">
+        <div class="panel-head stagger">
+          <h2>Znajomi</h2>
+          <p class="muted">Dodawaj znajomych po nicku Minecraft. Widzisz, kto jest w launcherze, a kto już gra – i na jakiej wersji.</p>
+        </div>
+
+        <div class="friends-layout">
+          <div class="friends-main">
+            <form class="add-friend px-box stagger" id="add-friend">
+              <span class="mk-ico"><i class="ico" data-ico="userPlus" data-size="18"></i></span>
+              <input class="px-input" id="friend-name" maxlength="16" placeholder="Nick gracza Minecraft…" spellcheck="false" autocomplete="off">
+              <button class="px-btn px-btn--sm" type="submit"><i class="ico" data-ico="plus" data-size="16"></i> Zaproś</button>
+            </form>
+            <div class="friends-sections stagger" id="friends-sections">
+              <div class="loading-row"><span class="px-spinner"></span> Wczytywanie znajomych…</div>
+            </div>
+          </div>
+
+          <aside class="friends-side px-box stagger">
+            <h3 class="section-title"><i class="ico" data-ico="info" data-size="16"></i> Jak to działa?</h3>
+            <ol class="howto">
+              <li>Oboje macie <b>ten sam adres serwera Fresh</b> w Ustawieniach.</li>
+              <li>Wpisz nick znajomego i kliknij <b>Zaproś</b>.</li>
+              <li>Znajomy akceptuje zaproszenie u siebie w tej zakładce.</li>
+              <li>W grze zobaczycie nawzajem ikonkę Fresh przy nicku i swoje kosmetyki.</li>
+            </ol>
+            <button class="px-btn px-btn--white px-btn--sm" id="btn-friends-settings"><i class="ico" data-ico="server" data-size="16"></i> Ustaw serwer</button>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= MODY (Modrinth + własne) ================= -->
+      <section class="panel" data-panel="mods">
+        <div class="panel-head panel-head--row stagger">
+          <div>
+            <h2>Mody</h2>
+            <p class="muted">Szukaj w Modrinth i instaluj jednym kliknięciem – razem z wymaganymi zależnościami. Własne pliki <b>.jar</b> po prostu przeciągnij tutaj.</p>
+          </div>
+          <button class="mods-profile glass" id="mods-profile"></button>
+        </div>
+
+        <div class="mods-none px-box stagger" id="mods-none" hidden>
+          <i class="ico" data-ico="package" data-size="34"></i>
+          <strong>Mody działają w profilach Fabric i Forge</strong>
+          <p class="muted">Utwórz profil z loaderem modów – Fabric 1.21.10 dodatkowo ma mod Fresh.</p>
+          <button class="px-btn" id="btn-mods-newprofile"><i class="ico" data-ico="plus" data-size="16"></i> Nowy profil</button>
+        </div>
+
+        <div class="mods-body" id="mods-body">
+          <div class="mods-bar stagger">
+            <div class="seg-tabs" id="mods-tabs">
+              <button class="seg-tab is-active" data-tab="discover"><i class="ico" data-ico="globe" data-size="14"></i> Odkrywaj</button>
+              <button class="seg-tab" data-tab="installed"><i class="ico" data-ico="package" data-size="14"></i> Zainstalowane <span class="tab-count" id="mods-installed-count">0</span></button>
+            </div>
+            <div class="mods-bar-right">
+              <button class="px-btn px-btn--white px-btn--sm" id="btn-mods-upload"><i class="ico" data-ico="upload" data-size="16"></i> Wgraj .jar</button>
+              <button class="icon-btn" id="btn-mods-folder" title="Folder modów"><i class="ico" data-ico="folder" data-size="16"></i></button>
+            </div>
+          </div>
+
+          <div id="mods-discover">
+            <div class="mods-search stagger">
+              <div class="search-box search-box--big">
+                <i class="ico" data-ico="search" data-size="18"></i>
+                <input class="px-input" id="mods-search" type="search" placeholder="Szukaj modów na Modrinth… np. Sodium, JEI, minimapa" spellcheck="false">
+              </div>
+              <select class="px-select" id="mods-sort" title="Sortowanie">
+                <option value="relevance">Trafność</option>
+                <option value="downloads">Pobrania</option>
+                <option value="follows">Obserwujący</option>
+                <option value="updated">Ostatnio aktualizowane</option>
+                <option value="newest">Najnowsze</option>
+              </select>
+            </div>
+            <div class="chip-row stagger" id="mods-cats"></div>
+            <div class="mods-total"><span id="mods-total"></span><span class="mr-brand">dane: Modrinth</span></div>
+            <div class="mods-results" id="mods-results"></div>
+            <button class="px-btn px-btn--white px-btn--block mods-more" id="mods-more" hidden>Pokaż więcej</button>
+          </div>
+
+          <div id="mods-installed-view" hidden>
+            <div class="search-box mods-installed-search">
+              <i class="ico" data-ico="search" data-size="16"></i>
+              <input class="px-input" id="mods-installed-search" type="search" placeholder="Filtruj zainstalowane…" spellcheck="false">
+            </div>
+            <div class="mods-installed" id="mods-installed"></div>
+          </div>
+        </div>
+
+        <div class="mods-drop" id="mods-drop" hidden>
+          <div><i class="ico" data-ico="upload" data-size="40"></i><strong>Upuść pliki .jar</strong><span>Trafią do folderu mods wybranego profilu</span></div>
+        </div>
+      </section>
+
+      <!-- ================= KLIENT (moduły moda Fresh) ================= -->
+      <section class="panel" data-panel="client">
+        <div class="panel-head stagger">
+          <h2>Moduły Fresh</h2>
+          <p class="muted">Mod Fresh instaluje się automatycznie w profilach <b>Fabric 1.21.10</b>. Szczegółowe ustawienia każdego modułu (kolory, skala, tryby) zmienisz w grze pod <kbd>R-Shift</kbd>.</p>
+        </div>
+
+        <div class="rshift-hero px-box stagger">
+          <div class="keys">
+            <div class="keycap">R-Shift</div>
+            <div class="keycap keycap--sm">C</div>
+            <div class="keycap keycap--sm">L-Alt</div>
+            <div class="keycap keycap--sm">B</div>
+          </div>
+          <div>
+            <strong>Menu modułów i kosmetyków w grze</strong>
+            <p class="muted">Prawy Shift – menu · C – zoom · Lewy Alt – freelook · B – emotki 3D. Przesuwaj HUD myszką, zmieniaj kolory i skalę.</p>
+          </div>
+          <label class="toggle-row">
+            <button class="px-toggle" id="toggle-modinstall" role="switch" aria-checked="true"></button>
+            <span>Instaluj automatycznie</span>
+          </label>
+        </div>
+
+        <div class="keys-card px-box stagger">
+          <div class="keys-card-head">
+            <h3 class="section-title"><i class="ico" data-ico="keyboard" data-size="18"></i> Skróty klawiszowe</h3>
+            <p class="muted">Kliknij przycisk i naciśnij klawisz (albo boczny przycisk myszy). Esc – anuluj, Backspace – usuń.</p>
+          </div>
+          <div class="main-keys" id="main-keys"></div>
+        </div>
+
+        <div class="module-filter stagger" id="module-filter"></div>
+        <div class="module-grid stagger" id="module-grid"></div>
+      </section>
+
+      <!-- ================= USTAWIENIA ================= -->
+      <section class="panel" data-panel="settings">
+        <div class="panel-head stagger">
+          <h2>Ustawienia</h2>
+          <p class="muted">Zmiany zapisują się automatycznie. <span class="saved-flash" id="saved-flash">Zapisano ✓</span></p>
+        </div>
+
+        <div class="settings-grid">
+          <div class="setting px-box stagger">
+            <h3><i class="ico" data-ico="cpu" data-size="18"></i> Pamięć RAM</h3>
+            <div class="ram-row">
+              <input type="range" class="px-range" id="ram-range" min="1024" max="8192" step="512">
+              <output class="ram-value" id="ram-value">4096 MB</output>
+            </div>
+            <div class="ram-meter" id="ram-meter"></div>
+            <p class="muted" id="ram-hint">Zalecane: 4–6 GB dla vanilli, 6–8 GB dla modpacków.</p>
+          </div>
+
+          <div class="setting px-box stagger">
+            <h3><i class="ico" data-ico="monitor" data-size="18"></i> Rozdzielczość</h3>
+            <div class="res-row">
+              <select class="px-select" id="res-preset">
+                <option value="854x480">854 × 480</option>
+                <option value="1280x720">1280 × 720</option>
+                <option value="1600x900">1600 × 900</option>
+                <option value="1920x1080">1920 × 1080</option>
+                <option value="custom">Własna…</option>
+              </select>
+              <input class="px-input px-input--num" id="res-w" type="number" min="320" max="7680">
+              <span class="muted">×</span>
+              <input class="px-input px-input--num" id="res-h" type="number" min="240" max="4320">
+            </div>
+            <label class="toggle-row">
+              <button class="px-toggle" id="toggle-fullscreen" role="switch" aria-checked="false"></button>
+              <span>Pełny ekran</span>
+            </label>
+          </div>
+
+          <div class="setting setting--wide px-box stagger">
+            <h3><i class="ico" data-ico="folder" data-size="18"></i> Folder gry (.minecraft)</h3>
+            <div class="path-row">
+              <input class="px-input" id="game-dir" readonly>
+              <button class="px-btn px-btn--sm" id="btn-pick-dir">Zmień</button>
+              <button class="px-btn px-btn--sm px-btn--white" id="btn-open-dir">Otwórz</button>
+              <button class="px-btn px-btn--sm px-btn--white" id="btn-reset-dir">Domyślny</button>
+            </div>
+          </div>
+
+          <div class="setting setting--wide px-box stagger">
+            <h3><i class="ico" data-ico="coffee" data-size="18"></i> Java</h3>
+            <label class="toggle-row">
+              <button class="px-toggle" id="toggle-autojava" role="switch" aria-checked="true"></button>
+              <span>Automatycznie dobieraj i instaluj Javę (Eclipse Temurin)</span>
+            </label>
+            <div class="path-row" id="java-manual">
+              <input class="px-input" id="java-path" placeholder="Ścieżka do javaw.exe" spellcheck="false">
+              <button class="px-btn px-btn--sm" id="btn-pick-java">Wskaż</button>
+              <button class="px-btn px-btn--sm px-btn--white" id="btn-detect-java">Wykryj</button>
+            </div>
+            <div class="java-list" id="java-list"></div>
+            <label class="field">
+              <span class="eyebrow">Dodatkowe argumenty JVM</span>
+              <input class="px-input" id="jvm-args" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" spellcheck="false">
+            </label>
+          </div>
+
+          <div class="setting px-box stagger">
+            <h3><i class="ico" data-ico="layers" data-size="18"></i> Launcher</h3>
+            <label class="toggle-row">
+              <button class="px-toggle" id="toggle-close" role="switch" aria-checked="true"></button>
+              <span>Ukryj launcher po starcie gry</span>
+            </label>
+            <label class="toggle-row">
+              <button class="px-toggle" id="toggle-particles" role="switch" aria-checked="true"></button>
+              <span>Animowana scena</span>
+            </label>
+            <label class="field">
+              <span class="eyebrow">Pora dnia sceny</span>
+              <select class="px-select" id="scene-phase">
+                <option value="auto">Automatycznie (wg zegara)</option>
+                <option value="dawn">Świt</option>
+                <option value="day">Dzień</option>
+                <option value="dusk">Zmierzch</option>
+                <option value="night">Noc z zorzą</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="setting setting--wide px-box stagger discord-setting">
+            <div class="discord-cfg">
+              <h3><i class="ico" data-ico="discord" data-size="18"></i> Discord Rich Presence <span class="dc-state" id="dc-state">wyłączone</span></h3>
+              <label class="toggle-row">
+                <button class="px-toggle" id="toggle-discord" role="switch" aria-checked="true"></button>
+                <span>Pokazuj na Discordzie, że grasz na Fresh Client</span>
+              </label>
+              <label class="toggle-row">
+                <button class="px-toggle" id="toggle-discord-server" role="switch" aria-checked="true"></button>
+                <span>Pokazuj adres serwera, na którym grasz</span>
+              </label>
+              <label class="field">
+                <span class="eyebrow">Discord Application ID</span>
+                <input class="px-input" id="discord-id" placeholder="np. 1300000000000000000" spellcheck="false" inputmode="numeric">
+              </label>
+              <p class="muted dc-help">Jednorazowo: <b>discord.com/developers/applications</b> → New Application → nazwa <b>Fresh Client</b> → skopiuj <b>Application ID</b>. W Rich Presence → Art Assets wgraj obrazki z folderu <code>discord-assets</code> (logo, vanilla, fabric, forge).</p>
+            </div>
+            <div class="dc-preview">
+              <span class="eyebrow">Tak to zobaczą znajomi</span>
+              <div class="dc-card">
+                <div class="dc-banner"></div>
+                <div class="dc-user"><canvas id="dc-avatar" width="8" height="8"></canvas><strong id="dc-name">Gracz</strong></div>
+                <div class="dc-act">
+                  <small>GRA W</small>
+                  <div class="dc-row">
+                    <div class="dc-art"><canvas data-logo="big" data-scale="4"></canvas><span class="dc-small" id="dc-small"></span></div>
+                    <div class="dc-lines"><strong>Fresh Client</strong><span id="dc-details">Gra w Minecraft 1.21.10</span><span id="dc-line2">Serwer: play.example.pl</span><span class="dc-time" id="dc-time">00:12 upłynęło</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting px-box stagger">
+            <h3><i class="ico" data-ico="server" data-size="18"></i> Zaawansowane</h3>
+            <label class="field">
+              <span class="eyebrow">Adres serwera Fresh (ikonki i kosmetyki)</span>
+              <input class="px-input" id="server-url" placeholder="https://twoj-serwer.pl" spellcheck="false">
+            </label>
+            <label class="field">
+              <span class="eyebrow">Azure Client ID (puste = tryb domyślny)</span>
+              <input class="px-input" id="client-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" spellcheck="false">
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div class="modal-root" id="modal-root"></div>
+
+  <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
+  <script src="../shared/cosmetics.js"></script>
+  <script src="../shared/modules.js"></script>
+  <script src="../shared/logo.js"></script>
+  <script src="../shared/rewards.js"></script>
+  <script src="js/svg.js"></script>
+  <script src="js/keys.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/brand.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/voxels.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/cosmetics.js"></script>
+  <script src="js/friends.js"></script>
+  <script src="js/profiles.js"></script>
+  <script src="js/wizard.js"></script>
+  <script src="js/modsbrowser.js"></script>
+  <script src="js/rewards.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
